@@ -1,7 +1,7 @@
 import random
 
 global cards 
-cards = ["2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"]
+cards = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"]
 
 def welcomeMessage():
     print("|---------------------------|")
@@ -9,78 +9,106 @@ def welcomeMessage():
     print("|         BlackJack         |")
     print("|                           |")
     print("|---------------------------|")
+    startGame = input("Please type 's' to start playing: ")
 
-def getCards(firstTime, deck):
-    if (firstTime):
-        for i in range(0, 2):
-            index = random.randint(0, len(cards) - 1)
-            deck.append(cards[index])
-            i+= 1
-    else:
-        index = random.randint(0, len(cards) - 1)
-        deck.append(cards[index])
+    if not startGame == 's':
+        return
 
-    return deck
+def getCards():
+    playerDeck = []
+    croupierDeck = []
 
-def sumCards(playerCards, crupierCards):
-    hasAs = False
-    for i in range(0, len(playerCards)):
-        if playerCards[i] == "J" or playerCards[i] == "Q" or playerCards[i] == "K":
-            playerCards[i] = '10'
-        elif playerCards[i] == "A":
-            hasAs = True
-            playerCards[i] = '1'
-        i+= 1
+    for i in range (0, 2):
+        playerDeck.append(cards[random.randint(0, len(cards) - 1)])
+        croupierDeck.append(cards[random.randint(0, len(cards) - 1)])
+        
+    return playerDeck, croupierDeck
 
-    for j in range(0, len(crupierCards)):
-        if crupierCards[j] == "J" or crupierCards[j] == "Q" or crupierCards[j] == "K":
-            crupierCards[j] = '10'
-        elif crupierCards[j] == "A":
-            crupierCards[j] = '1'
-        elif crupierCards[j] == "?":
-            crupierCards[j] = '0'
-        j+= 1
+def sumList(listDeck):
+    copyDeck = listDeck.copy()
 
-    playerCards = convertToInt(playerCards)
-    if hasAs and sum(playerCards) <= 21:
-        playerTotal = sum(playerCards) + 10
-    else:
-        playerTotal = sum(playerCards)
+    countAs = 0
+    for i in range (0, len(copyDeck)):
+        if copyDeck[i] in ['J', 'Q', 'K']:
+            copyDeck[i] = '10'
+        elif copyDeck[i] == 'A':
+            countAs += 1
+            copyDeck[i] = '11'
 
-    crupierCards = convertToInt(crupierCards)
-    crupierTotal = sum(crupierCards)
+    # Convert string to int
+    copyDeck = stringToInt(copyDeck)
 
-    print(f"Crupier total: {crupierTotal}")
-    print(f"Player total: {playerTotal}")
-    
-def convertToInt(stringList):
-    integerList = [int(s) for s in stringList]
-    return integerList
+    sumDeck = sum(copyDeck)
+    for i in range(0, countAs):
+        if sumDeck > 21:
+            sumDeck = sumDeck - 10
+
+    return sumDeck
+
+def stringToInt(stringList):
+    intList = list(map(int, stringList))
+
+    return intList
+
+def hideCard(croupierDeck):
+    croupierDeck[1] = '?'
+    return croupierDeck
+
 
 def main():
-    playerCards = []
-    crupierCards = []
+    playerDeck, croupierDeck = getCards()
 
-    startGame = input("Please type 's' to start playing: ")
+    copyCrouDeck = croupierDeck.copy()
+    copyCrouDeck = hideCard(copyCrouDeck)
+
+    sumPD = sumList(playerDeck)
+    sumCD = sumList(croupierDeck)
+
+    print(f"Player cards: {playerDeck}, Sum: {sumPD}", end=" ")
+    print(f"Croupier cards: {copyCrouDeck}, Sum: ?")
+
+    # Check early BlackJack
+    if sumPD == 21 or sumCD == 21:
+        if sumPD == sumCD:
+            print("Tie!")
+        elif sumPD == 21 and sumCD != 21:
+            print("Player WINS by natural BlackJack!!")
+        elif sumCD == 21 and sumPD != 21:
+            print("Croupier WINS by natural BlackJack ://")
+        return
+
+    while True:
+        print("-------------------------------")
+        decisionPlayer = input("Hit (h) or stand (s)? ")
+        
+        if decisionPlayer == 'h':
+            playerDeck.append(cards[random.randint(0, len(cards) - 1)]) 
+            sumPD = sumList(playerDeck)
+            print(f"{playerDeck}, Sum: {sumPD}")
+
+            if sumPD > 21:
+                print("Croupier wins")
+                return
+            
+        elif decisionPlayer == 's':
+            print("-------------------------------")
+            while sumCD < 17:
+                croupierDeck.append(cards[random.randint(0, len(cards) - 1)]) 
+                sumCD = sumList(croupierDeck)
+                print(f"{croupierDeck}, Sum: {sumCD}")
+
+            if sumCD >= 17 and sumCD <= 21:
+                if sumCD > sumPD:
+                    print("Croupier wins")
+                elif sumPD > sumCD:
+                    print("Player wins")
+                elif sumPD == sumCD:
+                    print("Tie!") 
+            elif sumCD > 21:
+                print("Player wins")
+            break
+        
     
-    if startGame == 's':
-        firstTime = True
-
-        crupierCards = getCards(False, crupierCards)
-        crupierCards.append("?")
-
-        playerCards = getCards(firstTime, playerCards)
-        
-        print(f"\n-> Crupier cards: {crupierCards}")
-        print(f"-> Player deck: {playerCards}")
-
-        sumCards(playerCards, crupierCards)
-
-        
-if __name__ == "__main__": 
+if __name__ == '__main__':
     welcomeMessage()
     main()
-
-
-
-
